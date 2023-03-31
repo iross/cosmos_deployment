@@ -1,0 +1,43 @@
+version: '3.4'
+
+networks:
+  cosmos_swarm_network:
+    external: true
+
+services:
+  pr_upload:
+    image: ${UPLOAD_IMAGE}
+    environment:
+      - ELASTIC_ADDRESS=pr_es01:9200
+    networks:
+      cosmos_swarm_network:
+    volumes:
+      - /hdd/iaross/annotation_approval_checks/peerreviewed/output/:/output
+    command: "python3.8 -m retrieval.scripts.build_elastic_index \
+              --host pr_es01 \
+              --sections-parquet  /output/documents_5Feb_sections.parquet \
+              --documents-parquet /output/documents_5Feb_pdfs.parquet \
+              --tables-parquet    /output/documents_5Feb_tables.parquet \
+              --figures-parquet   /output/documents_5Feb_figures.parquet \
+              --equations-parquet /output/documents_5Feb_equations.parquet"
+    command: "python3.8 -m retrieval.scripts.build_elastic_page_index \
+              --host pr_es01 \
+              --documents-parquet /output/documents_5Feb.parquet"
+  pp_upload:
+    image: ${UPLOAD_IMAGE}
+    environment:
+      - ELASTIC_ADDRESS=pp_es01:9200
+    networks:
+      cosmos_swarm_network:
+    volumes:
+      - /hdd/iaross/annotation_approval_checks/preprints/output/:/output
+    command: "python3.8 -m retrieval.scripts.build_elastic_index \
+              --host pp_es01 \
+              --sections-parquet  /output/documents_5Feb_sections.parquet \
+              --documents-parquet /output/documents_5Feb_pdfs.parquet \
+              --tables-parquet    /output/documents_5Feb_tables.parquet \
+              --figures-parquet   /output/documents_5Feb_figures.parquet \
+              --equations-parquet /output/documents_5Feb_equations.parquet"
+    command: "python3.8 -m retrieval.scripts.build_elastic_page_index \
+              --host pp_es01 \
+              --documents-parquet /output/documents_5Feb.parquet"

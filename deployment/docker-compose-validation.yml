@@ -1,0 +1,91 @@
+version: '3.4'
+# Bring up preprint + peer-reviewed ES and 
+
+networks:
+  swarm_network:
+#    driver: overlay
+#    attachable: true
+
+services:
+  pr_birdnest_backend:
+    container_name: peerreviewed_cosmos_api_new
+    image: $API_IMAGE
+    ports:
+      - 5012:5010
+    environment:
+      - ELASTIC_ADDRESS=pr_es01:9200
+      - IMAGE_DIR
+      - PREFIX=/api/v1/
+    command: "gunicorn -b 0.0.0.0:5010 --log-level debug 'cosmos:create_app()'"
+    volumes:
+      - /hdd/iaross/annotation_approval_checks/peerreviewed/output/:/data
+      - /hdd/iaross/annotation_approval_checks/peerreviewed/tmp/:/cosmos_tmp
+    networks:
+      swarm_network:
+  pr_es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.0
+    container_name: pr_es01_new
+#    ports: 
+#      - 9920:9200
+    environment:
+      - node.name=pr_es01
+      - discovery.seed_hosts=pr_es01
+      - cluster.initial_master_nodes=es01
+      - cluster.name=es-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - /hdd/iaross/annotation_approval_checks/peerreviewed/es/:/usr/share/elasticsearch/data
+    networks:
+      swarm_network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  pp_birdnest_backend:
+    container_name: preprint_cosmos_api_new
+    image: $API_IMAGE
+    ports:
+      - 5011:5010
+    environment:
+      - ELASTIC_ADDRESS=pp_es01:9200
+      - SCHEDULER_ADDRESS
+      - IMAGE_DIR
+      - PREFIX=/api/v1/
+    command: "gunicorn -b 0.0.0.0:5010 --log-level debug 'cosmos:create_app()'"
+    volumes:
+      - /hdd/iaross/annotation_approval_checks/preprints/output/:/data
+      - /hdd/iaross/annotation_approval_checks/preprints/tmp/:/cosmos_tmp
+    networks:
+      swarm_network:
+  pp_es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.0
+    container_name: pp_es01_new
+    environment:
+      - node.name=pp_es01
+      - discovery.seed_hosts=pp_es01
+      - cluster.initial_master_nodes=pp_es01
+      - cluster.name=es-docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+#    ports: 
+#      - 9921:9200
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - /hdd/iaross/annotation_approval_checks/preprints/es/:/usr/share/elasticsearch/data
+    networks:
+      swarm_network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 10s
+      timeout: 10s
+      retries: 5

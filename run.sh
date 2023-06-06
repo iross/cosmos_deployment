@@ -29,7 +29,7 @@ do
 			  rm -f $f
 		  done
 		  docker-compose -f deployment/docker-compose-ingest.yml -p cosmos down
-          resize.py $OUTPUT_DIR/../
+                  resize.py $OUTPUT_DIR/../
 		  break
 		else
 		  echo "$(date) : COSMOS runner still running. Will check again in 5 minutes"
